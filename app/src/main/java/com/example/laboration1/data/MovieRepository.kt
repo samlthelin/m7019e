@@ -1,12 +1,6 @@
-package com.example.laboration1
+package com.example.laboration1.data
 
-data class Movie(
-    val id: Int,
-    val title: String,
-    val genres: List<String>,
-    val homepage: String,
-    val imdbId: String
-)
+import com.example.laboration1.model.Movie
 
 object MovieRepository {
     val movieList = listOf(
