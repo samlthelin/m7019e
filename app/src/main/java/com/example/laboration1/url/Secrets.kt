@@ -1,0 +1,5 @@
+package com.example.laboration1.url
+
+object Secrets {
+    const val API_KEY="eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJlOGMyMDRjMmVmZTcyMGUyYTNjY2U3ZjAwNmNlNjQ5NCIsIm5iZiI6MTc0MzY3MTUzNy43NTUsInN1YiI6IjY3ZWU1MGYxYjViMWM1YTRjM2E3YjMxNSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.iyT5ozPUaQcIiaO2zBs42XNbU5UsXg7E2JGMZsvLCLo"
+}
