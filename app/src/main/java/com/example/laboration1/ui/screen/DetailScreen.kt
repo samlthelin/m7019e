@@ -20,6 +20,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -28,6 +30,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter.State.Empty.painter
@@ -37,12 +40,25 @@ import com.example.laboration1.ui.component.TopBarWithHome
 import com.example.laboration1.url.Constants
 import coil3.compose.AsyncImagePainter
 import coil3.compose.rememberAsyncImagePainter
+import com.example.laboration1.ui.viewmodel.MovieViewModel
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DetailScreen(navController: NavController, movie: Movie) {
+fun DetailScreen(navController: NavController, movieId: Int, viewModel: MovieViewModel = viewModel()) {
     val context = LocalContext.current
+    val movie = viewModel.selectedMovie.collectAsState().value
+
+    LaunchedEffect(movieId) {
+        viewModel.fetchMovieDetails(movieId)
+    }
+    // makes it so that we do not need the safe calls (?)
+    if (movie == null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("Loading...")
+        }
+        return
+    }
 
     Scaffold(
         topBar = {

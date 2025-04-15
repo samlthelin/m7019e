@@ -8,3 +8,4 @@ data class Movie(
     val imdbId: String,
     val posterPath: String
 )
+

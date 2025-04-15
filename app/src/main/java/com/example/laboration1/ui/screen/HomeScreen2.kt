@@ -16,6 +16,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -26,16 +27,16 @@ import com.example.laboration1.data.MovieRepository
 import com.example.laboration1.model.Movie
 import com.example.laboration1.ui.component.GenreSection
 import com.example.laboration1.url.Constants
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.laboration1.ui.viewmodel.MovieViewModel
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen2(navController: NavController) {
-    val movies = MovieRepository.movieList
-
-    val genreSections = movies
-        .flatMap { movie -> movie.genres.map { genre -> genre to movie } }
-        .groupBy({ it.first }, { it.second })
+    val viewModel: MovieViewModel = viewModel()
+    val movies = viewModel.movies.collectAsState().value
+    val genreSections = viewModel.genreSections.collectAsState().value
 
     Scaffold(
         topBar = {
@@ -46,18 +47,18 @@ fun HomeScreen2(navController: NavController) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 16.dp)
         ) {
             items(genreSections.toList()) { (genre, moviesInGenre) ->
                 GenreSection(
                     genre = genre,
                     movies = moviesInGenre,
-                    onMovieClick = { selectedMovie ->
-                        navController.navigate("details/${selectedMovie.id}")
+                    onMovieClick = { movie ->
+                        navController.navigate("details/${movie.id}")
                     }
                 )
             }
         }
+
     }
 }
 

@@ -20,12 +20,10 @@ fun MovieApp() {
         }
         composable("details/{movieId}") { backStackEntry ->
             val movieId = backStackEntry.arguments?.getString("movieId")?.toIntOrNull()
-            val movie = MovieRepository.movieList.find { it.id == movieId }
-
-            if (movie != null) {
-                DetailScreen(navController, movie)
+            if (movieId != null) {
+                DetailScreen(navController, movieId)
             } else {
-                Text("Movie not found.")
+                Text("Movie not found")
             }
         }
         composable("third") {
