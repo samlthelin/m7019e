@@ -64,8 +64,8 @@ fun DetailScreen(navController: NavController, movie: Movie) {
                     .padding(top = 16.dp)
                     .width(200.dp)
                     .height(300.dp)
-                    .alpha(1f)
-                    .background(Color.Red),
+                    .alpha(1f),
+                    //.background(Color.Red),
                 onSuccess = {
                     Log.d("Coil", "Poster loaded successfully!")
                 },

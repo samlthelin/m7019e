@@ -8,6 +8,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.laboration1.data.MovieRepository
 import com.example.laboration1.ui.screen.DetailScreen
 import com.example.laboration1.ui.screen.HomeScreen
+import com.example.laboration1.ui.screen.HomeScreen2
 import com.example.laboration1.ui.screen.ThirdScreen
 
 @Composable
@@ -15,7 +16,7 @@ fun MovieApp() {
     val navController = rememberNavController()
     NavHost(navController, startDestination = "home") {
         composable("home") {
-            HomeScreen(navController)
+            HomeScreen2(navController)
         }
         composable("details/{movieId}") { backStackEntry ->
             val movieId = backStackEntry.arguments?.getString("movieId")?.toIntOrNull()
