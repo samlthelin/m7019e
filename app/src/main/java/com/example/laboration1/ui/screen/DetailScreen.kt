@@ -126,9 +126,10 @@ fun DetailScreen(navController: NavController, movieId: Int, viewModel: MovieVie
 
             //Spacer(modifier = Modifier.padding(8.dp))
 
-            Button(onClick = { navController.navigate("third") }) {
+            Button(onClick = { navController.navigate("third/${movie.id}") }) {
                 Text("Go to Third Screen")
             }
+
 
         }
     }

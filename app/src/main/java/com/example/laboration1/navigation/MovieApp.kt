@@ -26,8 +26,13 @@ fun MovieApp() {
                 Text("Movie not found")
             }
         }
-        composable("third") {
-            ThirdScreen(navController)
+        composable("third/{movieId}") { backStackEntry ->
+            val movieId = backStackEntry.arguments?.getString("movieId")?.toIntOrNull()
+            if (movieId != null) {
+                ThirdScreen(navController, movieId)
+            } else {
+                Text("No movie selected")
+            }
         }
     }
 }

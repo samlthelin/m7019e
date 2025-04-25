@@ -6,12 +6,17 @@ import androidx.lifecycle.viewModelScope
 import com.example.laboration1.data.MovieRepository.movieList
 import com.example.laboration1.model.Movie
 import com.example.laboration1.network.TmdbClient
+import com.example.laboration1.network.model.ApiReview
+import com.example.laboration1.network.model.ApiVideo
 import com.example.laboration1.network.toMovie
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import com.example.laboration1.url.Secrets
 import com.example.laboration1.network.model.MovieResponse
+import com.example.laboration1.network.model.ReviewResponse
+import com.example.laboration1.network.model.VideoResponse
+
 
 
 
@@ -74,5 +79,34 @@ class MovieViewModel : ViewModel() {
             }
         }
     }
+
+    private val _reviews = MutableStateFlow<List<ApiReview>>(emptyList())
+    val reviews: StateFlow<List<ApiReview>> = _reviews
+
+    private val _videos = MutableStateFlow<List<ApiVideo>>(emptyList())
+    val videos: StateFlow<List<ApiVideo>> = _videos
+
+    fun fetchReviews(movieId: Int) {
+        viewModelScope.launch {
+            try {
+                val response = TmdbClient.api.getReviews(movieId, Secrets.API_KEY)
+                _reviews.value = response.results
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun fetchVideos(movieId: Int) {
+        viewModelScope.launch {
+            try {
+                val response = TmdbClient.api.getVideos(movieId, Secrets.API_KEY)
+                _videos.value = response.results.filter { it.site == "YouTube" && it.type == "Trailer" }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
 
 }
