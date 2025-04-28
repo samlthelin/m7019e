@@ -10,7 +10,7 @@ data class VideoResponse(
 @Serializable
 data class ApiVideo(
     val id: String,
-    val key: String, // This is the YouTube video key
+    val key: String,
     val name: String,
     val site: String,
     val type: String

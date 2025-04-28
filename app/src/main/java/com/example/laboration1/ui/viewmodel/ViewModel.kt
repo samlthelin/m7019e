@@ -19,28 +19,31 @@ import com.example.laboration1.network.model.VideoResponse
 
 
 
-
+// just extend the viewmodel android class!!
 class MovieViewModel : ViewModel() {
 
+    // mutable list. stateflow since we want this to listen to UI cahnges.
+    // remember: mutablestateflow is mutable. do not let UI see this!
     private val _movies = MutableStateFlow<List<Movie>>(emptyList())
-    val movies: StateFlow<List<Movie>> = _movies
-
     private val _genreSections = MutableStateFlow<Map<String, List<Movie>>>(emptyMap())
     val genreSections: StateFlow<Map<String, List<Movie>>> = _genreSections
 
-
+    // fetch the popular movies when we start (look at fetchMovies..)
     init {
         fetchMovies()
     }
 
     private fun fetchMovies() {
+        // important since it is running in background. when viewmodel is destroyed we want these to cancel as well
         viewModelScope.launch {
             try {
+
+                // viewmodel handles the retro api fetch. fetch genres and popular movies:
                 val genreResponse = TmdbClient.api.getGenres(Secrets.API_KEY)
-                val genreMap = genreResponse.genres.associateBy({ it.id }, { it.name })
+                val genreMap = genreResponse.genres.associateBy({ it.id }, { it.name }) // since API we need to bind id to the name of each movie.
 
                 val movieResponse = TmdbClient.api.getPopularMovies(Secrets.API_KEY)
-                val movieList = movieResponse.results.map { it.toMovie(genreMap) }
+                val movieList = movieResponse.results.map { it.toMovie(genreMap) } // bind movie to genre
 
                 Log.d("MovieViewModel", "Fetched ${movieList.size} movies")
 
@@ -58,10 +61,13 @@ class MovieViewModel : ViewModel() {
     }
 
 
+    //---- detail screen ----
+    // when a user taps a movie we need extra details for detail screen. handled here!
     private val _selectedMovie = MutableStateFlow<Movie?>(null)
     val selectedMovie: StateFlow<Movie?> = _selectedMovie
 
     fun fetchMovieDetails(movieId: Int) {
+        // important since it is running in background. when viewmodel is destroyed we want these to cancel as well
         viewModelScope.launch {
             try {
                 val response = TmdbClient.api.getMovieDetails(movieId, Secrets.API_KEY)
@@ -80,13 +86,18 @@ class MovieViewModel : ViewModel() {
         }
     }
 
+
+    // ---- third screen ----
+    // store results in stateflows so the screen can actually react....
     private val _reviews = MutableStateFlow<List<ApiReview>>(emptyList())
     val reviews: StateFlow<List<ApiReview>> = _reviews
 
     private val _videos = MutableStateFlow<List<ApiVideo>>(emptyList())
     val videos: StateFlow<List<ApiVideo>> = _videos
 
+    // use defined endpoints..!
     fun fetchReviews(movieId: Int) {
+        // important since it is running in background. when viewmodel is destroyed we want these to cancel as well
         viewModelScope.launch {
             try {
                 val response = TmdbClient.api.getReviews(movieId, Secrets.API_KEY)
@@ -98,6 +109,7 @@ class MovieViewModel : ViewModel() {
     }
 
     fun fetchVideos(movieId: Int) {
+        // important since it is running in background. when viewmodel is destroyed we want these to cancel as well
         viewModelScope.launch {
             try {
                 val response = TmdbClient.api.getVideos(movieId, Secrets.API_KEY)

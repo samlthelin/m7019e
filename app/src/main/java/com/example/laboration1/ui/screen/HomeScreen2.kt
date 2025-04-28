@@ -35,7 +35,7 @@ import com.example.laboration1.ui.viewmodel.MovieViewModel
 @Composable
 fun HomeScreen2(navController: NavController) {
     val viewModel: MovieViewModel = viewModel()
-    val movies = viewModel.movies.collectAsState().value
+    //val movies = viewModel.movies.collectAsState().value
     val genreSections = viewModel.genreSections.collectAsState().value
 
     Scaffold(

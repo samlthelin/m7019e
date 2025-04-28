@@ -49,6 +49,8 @@ fun DetailScreen(navController: NavController, movieId: Int, viewModel: MovieVie
     val context = LocalContext.current
     val movie = viewModel.selectedMovie.collectAsState().value
 
+    // we're telling compose to only run this ONCE (on first composition).
+    // without this, the screen could recompose 20 times and need to fetch the movies 20 times!
     LaunchedEffect(movieId) {
         viewModel.fetchMovieDetails(movieId)
     }

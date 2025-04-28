@@ -34,9 +34,66 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.media3.common.MediaItem
 import coil3.compose.AsyncImage
 
-
+// just for lab presentation! if the site field is Sample we know it's the hardcoded we have for preview!
 @Composable
 fun VideoCard(video: ApiVideo) {
+    if (video.site == "Sample") {
+        ExoPlayerCard(video)
+    } else {
+        ExternalYouTubeCard(video)
+    }
+}
+
+// solution from canvas, more or less. it works! :)
+@Composable
+fun ExoPlayerCard(video: ApiVideo) {
+
+    val context = LocalContext.current // Get the current context
+    val lifecycleOwner = LocalLifecycleOwner.current // not in medium but should be important, using principles from viewmodel.
+    val player = remember { ExoPlayer.Builder(context).build() } // remember to not recreate it every recomposition!
+
+    val videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+
+    AndroidView(
+        factory = {
+            PlayerView(context).apply {
+                this.player = player
+                useController = true
+            }
+        },
+        modifier = Modifier
+            .padding(8.dp)
+            .width(200.dp)
+            .height(120.dp)
+    )
+
+    // Manage lifecycle events
+    // essentially, if the screen stops we pause the video, and if the screen is destroyed we release it from mem.
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_STOP -> player.pause()
+                Lifecycle.Event.ON_DESTROY -> player.release()
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        // Set MediaSource to ExoPlayer
+        player.setMediaItem(MediaItem.fromUri(videoUrl))
+        player.prepare()
+        player.playWhenReady = false
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            player.release()
+        }
+    }
+}
+
+// for youtube trailer. uses same principles as from version with imdb!
+@Composable
+fun ExternalYouTubeCard(video: ApiVideo) {
     val context = LocalContext.current
     val thumbnailUrl = "https://img.youtube.com/vi/${video.key}/hqdefault.jpg"
 
