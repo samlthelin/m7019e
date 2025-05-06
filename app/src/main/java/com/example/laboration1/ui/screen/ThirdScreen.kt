@@ -1,6 +1,7 @@
 package com.example.laboration1.ui.screen
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -18,11 +19,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.laboration1.network.ConnectionStatus
+import com.example.laboration1.network.ConnectivityObserver
 import com.example.laboration1.network.model.ApiVideo
 import com.example.laboration1.ui.component.ReviewCard
 import com.example.laboration1.ui.component.TopBarWithHome
@@ -35,6 +40,23 @@ import com.example.laboration1.ui.viewmodel.MovieViewModel
 fun ThirdScreen(navController: NavController, movieId: Int, viewModel: MovieViewModel = viewModel()) {
     val reviews = viewModel.reviews.collectAsState().value
     val videos = viewModel.videos.collectAsState().value
+    val context = LocalContext.current
+    val connectivityObserver = remember { ConnectivityObserver(context) }
+
+    LaunchedEffect(Unit) {
+        connectivityObserver.connectionStatus.collect { status ->
+            if (status == ConnectionStatus.Available) {
+                Log.d("ThirdScreen","Connection to ThirdScreen restored: fetching reviews and trailers!")
+                viewModel.fetchVideos(movieId)
+                viewModel.fetchReviews(movieId)
+            }
+        }
+    }
+
+
+
+
+
 
     LaunchedEffect(movieId) {
         viewModel.fetchReviews(movieId)

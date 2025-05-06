@@ -17,11 +17,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -40,7 +42,10 @@ import com.example.laboration1.ui.component.TopBarWithHome
 import com.example.laboration1.url.Constants
 import coil3.compose.AsyncImagePainter
 import coil3.compose.rememberAsyncImagePainter
+import com.example.laboration1.network.ConnectionStatus
+import com.example.laboration1.network.ConnectivityObserver
 import com.example.laboration1.ui.viewmodel.MovieViewModel
+import java.time.format.TextStyle
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,6 +53,16 @@ import com.example.laboration1.ui.viewmodel.MovieViewModel
 fun DetailScreen(navController: NavController, movieId: Int, viewModel: MovieViewModel = viewModel()) {
     val context = LocalContext.current
     val movie = viewModel.selectedMovie.collectAsState().value
+    val connectivityObserver = remember { ConnectivityObserver(context) }
+
+    LaunchedEffect(Unit) {
+        connectivityObserver.connectionStatus.collect { status ->
+            if (status == ConnectionStatus.Available && movie==null) {
+                Log.d("DetailScreen","Connection to detailscreen restored: fetching movie!!!")
+                viewModel.fetchMovieDetails(movieId,context)
+            }
+        }
+    }
 
     // we're telling compose to only run this ONCE (on first composition).
     // without this, the screen could recompose 20 times and need to fetch the movies 20 times!
@@ -98,10 +113,14 @@ fun DetailScreen(navController: NavController, movieId: Int, viewModel: MovieVie
 
             ClickableText(
                 text = AnnotatedString("Visit Homepage"),
+
                 onClick = {
                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(movie.homepage))
                     context.startActivity(intent)
                 },
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = MaterialTheme.colorScheme.primary
+                ),
                 modifier = Modifier.Companion.padding(8.dp)
             )
 

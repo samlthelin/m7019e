@@ -19,11 +19,17 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.example.laboration1.data.MovieRepository
@@ -31,6 +37,9 @@ import com.example.laboration1.model.Movie
 import com.example.laboration1.ui.component.GenreSection
 import com.example.laboration1.url.Constants
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.laboration1.network.ConnectionStatus
+import com.example.laboration1.network.ConnectivityObserver
+import com.example.laboration1.ui.component.TopBarWithSort
 import com.example.laboration1.ui.viewmodel.MovieViewModel
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -40,8 +49,24 @@ fun HomeScreen2(navController: NavController) {
     val viewModel: MovieViewModel = viewModel()
     val context = LocalContext.current
 
+    var sortType by rememberSaveable { mutableStateOf("popular") }
+    var expanded by remember { mutableStateOf(false) }
+    val sortOptions = listOf("popular", "top_rated")
+
+    val connectivityObserver = remember { ConnectivityObserver(context) }
+    val lifecycleOwner = LocalLifecycleOwner.current //????????
+
     LaunchedEffect(Unit) {
-        viewModel.fetchMovies("popular",context)
+        connectivityObserver.connectionStatus.collect { status ->
+            if (status == ConnectionStatus.Available) {
+                viewModel.fetchMovies(sortType, context)
+            }
+        }
+    }
+
+    LaunchedEffect(sortType) {
+        Log.d("HomeScreen2","Fetching movies for type: ${sortType}")
+        viewModel.fetchMovies(sortType,context)
     }
 
 
@@ -54,7 +79,8 @@ fun HomeScreen2(navController: NavController) {
     }
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Movies by Genre") })
+            //TopAppBar(title = { Text("Movies by Genre") })
+            TopBarWithSort(currentSort = sortType, onSortChange = {sortType=it})
         }
     ) { paddingValues ->
         LazyColumn(
