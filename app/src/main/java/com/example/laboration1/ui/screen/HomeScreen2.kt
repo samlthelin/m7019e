@@ -1,10 +1,8 @@
 package com.example.laboration1.ui.screen
 
-import com.example.laboration1.R
 import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -17,7 +15,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -31,10 +28,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
-import com.example.laboration1.data.MovieRepository
 import com.example.laboration1.model.Movie
 import com.example.laboration1.ui.component.GenreSection
 import com.example.laboration1.url.Constants
@@ -43,10 +38,6 @@ import com.example.laboration1.network.ConnectionStatus
 import com.example.laboration1.network.ConnectivityObserver
 import com.example.laboration1.ui.component.TopBarWithSort
 import com.example.laboration1.ui.viewmodel.MovieViewModel
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Column
-//import androidx.compose.material3.R
-import androidx.compose.ui.res.painterResource
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,11 +47,7 @@ fun HomeScreen2(navController: NavController) {
     val context = LocalContext.current
 
     var sortType by rememberSaveable { mutableStateOf("popular") }
-    var expanded by remember { mutableStateOf(false) }
-    val sortOptions = listOf("popular", "top_rated")
-
     val connectivityObserver = remember { ConnectivityObserver(context) }
-    val lifecycleOwner = LocalLifecycleOwner.current //????????
 
     LaunchedEffect(Unit) {
         connectivityObserver.connectionStatus.collect { status ->

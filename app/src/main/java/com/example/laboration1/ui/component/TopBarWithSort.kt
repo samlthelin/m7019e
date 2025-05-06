@@ -39,14 +39,14 @@ fun TopBarWithSort(currentSort: String, onSortChange: (String)-> Unit) {
         actions = {
             IconButton(onClick = {
                 val workRequest = OneTimeWorkRequestBuilder<CacheMoviesWorker>()
-                    .setInputData(workDataOf("sortType" to currentSort))
+                    .setInputData(workDataOf("sortType" to "popular"))
                     .build()
 
                 WorkManager.getInstance(context).enqueue(workRequest)
             }) {
                 Icon(
                     imageVector = Icons.Default.AddCircle,
-                    contentDescription = "Cache Now"
+                    contentDescription = "Cache Popular Movies"
                 )
             }
             Box {

@@ -15,7 +15,7 @@ class CacheMoviesWorker(
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result {
-        val sortType = inputData.getString("sort_type") ?: "popular"
+        val sortType = inputData.getString("sortType") ?: "popular"
         val db = MovieDatabase.getDatabase(applicationContext)
         val dao = db.movieDao()
 
@@ -26,7 +26,8 @@ class CacheMoviesWorker(
             val genreMap = genreResponse.genres.associateBy({ it.id }, { it.name })
 
             val response = when (sortType) {
-                "top_rated" -> TmdbClient.api.getTopRatedMovies(Secrets.API_KEY)
+                "top_rated" -> TmdbClient.api.getPopularMovies(Secrets.API_KEY)
+                //"top_rated" -> TmdbClient.api.getTopRatedMovies(Secrets.API_KEY)
                 else -> TmdbClient.api.getPopularMovies(Secrets.API_KEY)
             }
 
