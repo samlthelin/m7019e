@@ -1,48 +1,57 @@
 package com.example.laboration1.data
 
+import com.example.laboration1.core.util.Resource
+import com.example.laboration1.core.util.networkBoundResource
+import com.example.laboration1.data.local.dao.MovieDao
+import com.example.laboration1.data.local.entity.MovieEntity
 import com.example.laboration1.model.Movie
+import com.example.laboration1.network.TmdbApiService
+import com.example.laboration1.network.model.ApiMovie
+import com.example.laboration1.url.Secrets
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map   // only the Flow‐map
 
-object MovieRepository {
-    val movieList = listOf(
-        Movie(
-            id = 550,
-            title = "Fight Club",
-            genres = listOf("Drama"),
-            homepage = "http://www.foxmovies.com/movies/fight-club",
-            imdbId = "tt0137523",
-            posterPath = "/a26cQPRhJPX6GbWfQbvZdrrp9j9.jpg"
-        ),
-        Movie(
-            id = 155,
-            title = "The Dark Knight",
-            genres = listOf("Action", "Crime", "Drama"),
-            homepage = "http://thedarkknight.warnerbros.com/",
-            imdbId = "tt0468569",
-            posterPath = "/qJ2tW6WMUDux911r6m7haRef0WH.jpg"
-        ),
-        Movie(
-            id = 278,
-            title = "The Shawshank Redemption",
-            genres = listOf("Drama", "Crime"),
-            homepage = "https://www.warnerbros.com/movies/shawshank-redemption",
-            imdbId = "tt0111161",
-            posterPath = "/lyQBXzOQSuE59IsHyhrp0qIiPAz.jpg"
-        ),
-        Movie(
-            id = 157336,
-            title = "Interstellar",
-            genres = listOf("Adventure", "Drama", "Sci-Fi"),
-            homepage = "https://www.interstellarmovie.net/",
-            imdbId = "tt0816692",
-            posterPath = "/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg"
-        ),
-        Movie(
-            id = 603,
-            title = "The Matrix",
-            genres = listOf("Action", "Sci-Fi"),
-            homepage = "https://www.warnerbros.com/movies/matrix",
-            imdbId = "tt0133093",
-            posterPath = "/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg"
+class MovieRepository(
+    private val api: TmdbApiService,
+    private val dao: MovieDao
+) {
+
+    fun movies(category: String): Flow<Resource<List<Movie>>> =
+        networkBoundResource<List<Movie>, List<ApiMovie>>(
+            query = {
+                // ① grab the flow of entities
+                val entityFlow: Flow<List<MovieEntity>> = dao.movies(category)
+
+                // ② map that flow into movies
+                entityFlow.map { listOfEntities ->
+                    listOfEntities.map { it.toDomain() }  // now this is clearly List<Movie>
+                }
+            },
+            fetch = { api.getPopularMovies(Secrets.API_KEY).results },
+            saveFetchResult = { remote ->
+                dao.clear()
+                dao.insertAll(remote.map { it.toEntity(category) })
+            },
+            shouldFetch = { it.isEmpty() }
         )
+
+
+// ──────────────────────
+// Mapper-extensions (in same file & package)
+
+    private fun ApiMovie.toEntity(cat: String) = MovieEntity(
+        id = id,
+        title = title,
+        posterPath = posterPath ?: "",
+        category = cat
+    )
+
+    private fun MovieEntity.toDomain() = Movie(
+        id = id,
+        title = title,
+        genres = emptyList(),      // Kotlin’s emptyList<T>()
+        homepage = "",
+        imdbId = "",
+        posterPath = posterPath
     )
 }

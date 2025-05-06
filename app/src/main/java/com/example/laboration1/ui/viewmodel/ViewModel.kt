@@ -1,124 +1,111 @@
+// ui/viewmodel/MovieViewModel.kt
 package com.example.laboration1.ui.viewmodel
 
-import android.util.Log
-import androidx.lifecycle.ViewModel
+
+import com.example.laboration1.data.MovieRepository      // ← correct package
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.laboration1.data.MovieRepository.movieList
+import com.example.laboration1.core.connectivity.ConnectivityObserver
+import com.example.laboration1.di.ServiceLocator
 import com.example.laboration1.model.Movie
 import com.example.laboration1.network.TmdbClient
 import com.example.laboration1.network.model.ApiReview
 import com.example.laboration1.network.model.ApiVideo
-import com.example.laboration1.network.toMovie
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import com.example.laboration1.url.Secrets
-import com.example.laboration1.network.model.MovieResponse
-import com.example.laboration1.network.model.ReviewResponse
-import com.example.laboration1.network.model.VideoResponse
+import com.example.laboration1.core.util.Resource
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 
+class MovieViewModel(application: Application) : AndroidViewModel(application) {
 
+    /* -------------------------------------------------------
+     *  DEPENDENCIES  (enkel Service‑locator, byt gärna till Hilt)
+     * ------------------------------------------------------ */
+    private val repo: MovieRepository = ServiceLocator.provideRepository(application)
+    private val connectivity: ConnectivityObserver = ServiceLocator.provideConnectivity(application)
 
-// just extend the viewmodel android class!!
-class MovieViewModel : ViewModel() {
+    /* -------------------------------------------------------
+     *  LIST ‑ FLÖDE
+     * ------------------------------------------------------ */
+    private val _category = MutableStateFlow("popular")         // eller "top_rated" osv.
 
-    // mutable list. stateflow since we want this to listen to UI cahnges.
-    // remember: mutablestateflow is mutable. do not let UI see this!
-    private val _movies = MutableStateFlow<List<Movie>>(emptyList())
-    private val _genreSections = MutableStateFlow<Map<String, List<Movie>>>(emptyMap())
-    val genreSections: StateFlow<Map<String, List<Movie>>> = _genreSections
+    val movies: StateFlow<Resource<List<Movie>>> =
+        _category.flatMapLatest { cat -> repo.movies(cat) }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, Resource.Loading)
 
-    // fetch the popular movies when we start (look at fetchMovies..)
-    init {
-        fetchMovies()
-    }
-
-    private fun fetchMovies() {
-        // important since it is running in background. when viewmodel is destroyed we want these to cancel as well
-        viewModelScope.launch {
-            try {
-
-                // viewmodel handles the retro api fetch. fetch genres and popular movies:
-                val genreResponse = TmdbClient.api.getGenres(Secrets.API_KEY)
-                val genreMap = genreResponse.genres.associateBy({ it.id }, { it.name }) // since API we need to bind id to the name of each movie.
-
-                val movieResponse = TmdbClient.api.getPopularMovies(Secrets.API_KEY)
-                val movieList = movieResponse.results.map { it.toMovie(genreMap) } // bind movie to genre
-
-                Log.d("MovieViewModel", "Fetched ${movieList.size} movies")
-
-                _movies.value = movieList
-
-                val grouped = movieList
-                    .flatMap { movie -> movie.genres.map { genre -> genre to movie } }
+    /** Praktiskt om du vill fortsätta visa per genre som i din nuvarande HomeScreen2. */
+    val genreSections: StateFlow<Map<String, List<Movie>>> =
+        movies.map { res ->
+            if (res is Resource.Success) {
+                res.data
+                    .flatMap { m -> m.genres.map { it to m } }
                     .groupBy({ it.first }, { it.second })
+            } else emptyMap()
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
 
-                _genreSections.value = grouped
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
+    fun selectCategory(cat: String) {
+        _category.value = cat
     }
 
+    /** Triggar en ny körning av networkBoundResource. */
+    fun refresh() {
+        _category.value = _category.value
+    }
 
-    //---- detail screen ----
-    // when a user taps a movie we need extra details for detail screen. handled here!
+    /* Auto‑refresh när nätet kommer tillbaka */
+    init {
+        connectivity.status
+            .onEach { online -> if (online) refresh() }
+            .launchIn(viewModelScope)
+    }
+
+    /* -------------------------------------------------------
+     *  DETAIL SCREEN
+     * ------------------------------------------------------ */
     private val _selectedMovie = MutableStateFlow<Movie?>(null)
     val selectedMovie: StateFlow<Movie?> = _selectedMovie
 
-    fun fetchMovieDetails(movieId: Int) {
-        // important since it is running in background. when viewmodel is destroyed we want these to cancel as well
-        viewModelScope.launch {
-            try {
-                val response = TmdbClient.api.getMovieDetails(movieId, Secrets.API_KEY)
-
-                _selectedMovie.value = Movie(
-                    id = response.id,
-                    title = response.title,
-                    genres = response.genres.map { it.name },
-                    homepage = response.homepage,
-                    imdbId = response.imdbId,
-                    posterPath = response.posterPath
-                )
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+    fun fetchMovieDetails(movieId: Int) = viewModelScope.launch {
+        try {
+            val res = TmdbClient.api.getMovieDetails(movieId, Secrets.API_KEY)
+            _selectedMovie.value = Movie(
+                id = res.id,
+                title = res.title,
+                genres = res.genres.map { it.name },
+                homepage = res.homepage,
+                imdbId = res.imdbId,
+                posterPath = res.posterPath
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
-
-    // ---- third screen ----
-    // store results in stateflows so the screen can actually react....
+    /* -------------------------------------------------------
+     *  THIRD SCREEN (reviews + trailers)
+     * ------------------------------------------------------ */
     private val _reviews = MutableStateFlow<List<ApiReview>>(emptyList())
     val reviews: StateFlow<List<ApiReview>> = _reviews
 
     private val _videos = MutableStateFlow<List<ApiVideo>>(emptyList())
     val videos: StateFlow<List<ApiVideo>> = _videos
 
-    // use defined endpoints..!
-    fun fetchReviews(movieId: Int) {
-        // important since it is running in background. when viewmodel is destroyed we want these to cancel as well
-        viewModelScope.launch {
-            try {
-                val response = TmdbClient.api.getReviews(movieId, Secrets.API_KEY)
-                _reviews.value = response.results
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+    fun fetchReviews(movieId: Int) = viewModelScope.launch {
+        try {
+            val res = TmdbClient.api.getReviews(movieId, Secrets.API_KEY)
+            _reviews.value = res.results
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
-    fun fetchVideos(movieId: Int) {
-        // important since it is running in background. when viewmodel is destroyed we want these to cancel as well
-        viewModelScope.launch {
-            try {
-                val response = TmdbClient.api.getVideos(movieId, Secrets.API_KEY)
-                _videos.value = response.results.filter { it.site == "YouTube" && it.type == "Trailer" }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+    fun fetchVideos(movieId: Int) = viewModelScope.launch {
+        try {
+            val res = TmdbClient.api.getVideos(movieId, Secrets.API_KEY)
+            _videos.value = res.results.filter { it.site == "YouTube" && it.type == "Trailer" }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
-
-
 }

@@ -17,9 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.laboration1.model.Movie
-import com.example.laboration1.ui.screen.MovieItem2
 import androidx.compose.foundation.lazy.items
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,9 +53,10 @@ fun GenreSection(
 
         LazyRow {
             items(movies) { movie ->
-                MovieItem2(movie = movie) {
-                    onMovieClick(movie)
-                }
+                MovieItem2(
+                    movie = movie,
+                    onClick = { /* inget */ }
+                )
                 Spacer(modifier = Modifier.width(8.dp))
             }
 
