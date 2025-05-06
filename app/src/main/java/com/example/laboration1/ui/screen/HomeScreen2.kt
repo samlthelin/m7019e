@@ -1,6 +1,7 @@
 package com.example.laboration1.ui.screen
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -16,10 +17,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
@@ -35,9 +38,20 @@ import com.example.laboration1.ui.viewmodel.MovieViewModel
 @Composable
 fun HomeScreen2(navController: NavController) {
     val viewModel: MovieViewModel = viewModel()
-    //val movies = viewModel.movies.collectAsState().value
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchMovies("popular",context)
+    }
+
+
+
+    val movies = viewModel.movies.collectAsState().value
     val genreSections = viewModel.genreSections.collectAsState().value
 
+    LaunchedEffect(movies) {
+        Log.d("HomeScreen2","WE RECEIVED ${movies.size} MOVIES")
+    }
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("Movies by Genre") })
@@ -48,6 +62,7 @@ fun HomeScreen2(navController: NavController) {
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+
             items(genreSections.toList()) { (genre, moviesInGenre) ->
                 GenreSection(
                     genre = genre,
@@ -57,11 +72,11 @@ fun HomeScreen2(navController: NavController) {
                     }
                 )
             }
+
         }
 
     }
 }
-
 
 @Composable
 fun MovieItem2(movie: Movie, onClick: () -> Unit) {

@@ -14,10 +14,9 @@ data class ApiMovie(
     val id: Int,
     val title: String,
     @SerialName("poster_path") val posterPath: String? = null,
-    @SerialName("genre_ids") val genreIds: List<Int>,
-    val homepage: String? = null,
-    @SerialName("imdb_id") val imdbId: String? = null // note: may be missing in this call
+    @SerialName("genre_ids") val genreIds: List<Int>
 )
+
 
 @Serializable
 data class GenreResponse(

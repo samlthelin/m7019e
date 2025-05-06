@@ -12,6 +12,12 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface TmdbApiService {
+
+    @GET("movie/top_rated")
+    suspend fun getTopRatedMovies(
+        @Query("api_key") apiKey: String
+    ): MovieResponse
+
     @GET("movie/popular")
     suspend fun getPopularMovies(
         @Query("api_key") apiKey: String
@@ -43,16 +49,7 @@ interface TmdbApiService {
 
 }
 
-fun ApiMovie.toMovie(genreLookup: Map<Int, String>): Movie {
-    return Movie(
-        id = id,
-        title = title,
-        genres = genreIds.mapNotNull { genreLookup[it] },
-        homepage = "", // will add later
-        imdbId = "",   // will add later
-        posterPath = posterPath ?: ""
-    )
-}
+
 
 
 

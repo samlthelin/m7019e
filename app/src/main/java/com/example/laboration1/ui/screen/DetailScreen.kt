@@ -52,7 +52,7 @@ fun DetailScreen(navController: NavController, movieId: Int, viewModel: MovieVie
     // we're telling compose to only run this ONCE (on first composition).
     // without this, the screen could recompose 20 times and need to fetch the movies 20 times!
     LaunchedEffect(movieId) {
-        viewModel.fetchMovieDetails(movieId)
+        viewModel.fetchMovieDetails(movieId, context)
     }
     // makes it so that we do not need the safe calls (?)
     if (movie == null) {
