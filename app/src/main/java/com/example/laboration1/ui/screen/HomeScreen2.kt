@@ -1,7 +1,9 @@
 package com.example.laboration1.ui.screen
 
+import com.example.laboration1.R
 import android.annotation.SuppressLint
 import android.util.Log
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -41,6 +43,10 @@ import com.example.laboration1.network.ConnectionStatus
 import com.example.laboration1.network.ConnectivityObserver
 import com.example.laboration1.ui.component.TopBarWithSort
 import com.example.laboration1.ui.viewmodel.MovieViewModel
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Column
+//import androidx.compose.material3.R
+import androidx.compose.ui.res.painterResource
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -69,38 +75,45 @@ fun HomeScreen2(navController: NavController) {
         viewModel.fetchMovies(sortType,context)
     }
 
-
-
     val movies = viewModel.movies.collectAsState().value
     val genreSections = viewModel.genreSections.collectAsState().value
 
     LaunchedEffect(movies) {
         Log.d("HomeScreen2","WE RECEIVED ${movies.size} MOVIES")
     }
+
     Scaffold(
         topBar = {
-            //TopAppBar(title = { Text("Movies by Genre") })
             TopBarWithSort(currentSort = sortType, onSortChange = {sortType=it})
         }
-    ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-
-            items(genreSections.toList()) { (genre, moviesInGenre) ->
-                GenreSection(
-                    genre = genre,
-                    movies = moviesInGenre,
-                    onMovieClick = { movie ->
-                        navController.navigate("details/${movie.id}")
-                    }
-                )
+    ) { paddingValues->
+        if (genreSections.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Loading...")
+                }
             }
-
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                items(genreSections.toList()) { (genre, moviesInGenre) ->
+                    GenreSection(
+                        genre = genre,
+                        movies = moviesInGenre,
+                        onMovieClick = { movie ->
+                            navController.navigate("details/${movie.id}")
+                        }
+                    )
+                }
+            }
         }
-
     }
 }
 
