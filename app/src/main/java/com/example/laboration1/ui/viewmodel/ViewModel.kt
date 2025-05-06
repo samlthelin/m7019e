@@ -53,8 +53,11 @@ class MovieViewModel : ViewModel() {
 
                 val groupedCached = cached
                     .flatMap { movie -> movie.genres.map { genre -> genre to movie } }
+                    .sortedBy { it.first } // sort genre alphabetically
                     .groupBy({ it.first }, { it.second })
+                    .mapValues { (_, movies) -> movies.sortedBy { it.title } } // keep movies in the same order
                 _genreSections.value = groupedCached
+
 
                 // 2. Fetch genres and either popular or top-rated
                 val genreResponse = TmdbClient.api.getGenres(Secrets.API_KEY)
@@ -71,11 +74,14 @@ class MovieViewModel : ViewModel() {
                 _movies.value = movieList
 
                 // 3. Update genre sections
+
                 val grouped = movieList
                     .flatMap { movie -> movie.genres.map { genre -> genre to movie } }
+                    .sortedBy { it.first } // sort genre alphabetically
                     .groupBy({ it.first }, { it.second })
-
+                    .mapValues { (_, movies) -> movies.sortedBy { it.title } } // keep movies in the same order
                 _genreSections.value = grouped
+
 
 
 
@@ -84,7 +90,7 @@ class MovieViewModel : ViewModel() {
                 val entities = movieResponse.results.map { it.toEntity(viewType, genreMap) }
                 Log.d("EntityMapping", "Mapped ${entities.size} movies to entities")
                 Log.d("Room Insert", "Saving ${entities.size} movies to ROom for viewType=$viewType")
-                dao.deleteMoviesByViewType(viewType)
+                dao.clearMoviesExcept(viewType)
                 dao.insertMovies(entities)
                 Log.d("Room Insert", "iNSERTED ${entities.size} movies into Room for viewtype=$viewType")
             } catch (e: Exception) {

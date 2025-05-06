@@ -10,8 +10,8 @@ interface MovieDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMovies(movies: List<MovieEntity>)
 
-    @Query("DELETE FROM movies WHERE viewType = :viewType")
-    suspend fun deleteMoviesByViewType(viewType: String)
+    @Query("DELETE FROM movies WHERE viewType != :viewType")
+    suspend fun clearMoviesExcept(viewType: String)
 
     //for movie details:
 
