@@ -4,6 +4,11 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.workDataOf
+import com.example.laboration1.Workers.CacheMoviesWorker
 import com.example.laboration1.data.MovieRepository.movieList
 import com.example.laboration1.model.Movie
 import com.example.laboration1.network.TmdbClient
@@ -172,6 +177,21 @@ class MovieViewModel : ViewModel() {
                 e.printStackTrace()
             }
         }
+    }
+
+
+    fun scheduleMovieCaching(context: Context, sortType: String) {
+        val data = workDataOf("sort_type" to sortType)
+
+        val request = OneTimeWorkRequestBuilder<CacheMoviesWorker>()
+            .setInputData(data)
+            .build()
+
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            "cache_movies",
+            ExistingWorkPolicy.REPLACE,
+            request
+        )
     }
 
 

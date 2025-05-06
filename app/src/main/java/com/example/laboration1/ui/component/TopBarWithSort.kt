@@ -4,6 +4,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -18,18 +20,35 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.workDataOf
+import com.example.laboration1.Workers.CacheMoviesWorker
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBarWithSort(currentSort: String, onSortChange: (String)-> Unit) {
     var expanded by remember { mutableStateOf(false) }
     val sortOptions = listOf("popular", "top_rated")
-
+    val context = LocalContext.current
     TopAppBar(
         title = { Text("Movies by Genre") },
         actions = {
+            IconButton(onClick = {
+                val workRequest = OneTimeWorkRequestBuilder<CacheMoviesWorker>()
+                    .setInputData(workDataOf("sortType" to currentSort))
+                    .build()
+
+                WorkManager.getInstance(context).enqueue(workRequest)
+            }) {
+                Icon(
+                    imageVector = Icons.Default.AddCircle,
+                    contentDescription = "Cache Now"
+                )
+            }
             Box {
                 Text(
                     text = currentSort.replace("_", " ").replaceFirstChar { it.uppercase() },

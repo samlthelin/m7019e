@@ -16,6 +16,7 @@ retrofit = "2.9.0"
 retrofit2KotlinxSerializationConverter = "0.8.0"
 roomRuntime = "2.7.1"
 uiWebkit = "1.4.3"
+workRuntimeKtx = "2.10.1"
 youtubePlayerCompose = "1.0.0-beta01"
 
 [libraries]
@@ -27,6 +28,7 @@ androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref =
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomRuntime" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
 androidx-ui-webkit = { module = "androidx.compose.ui:ui-webkit", version.ref = "uiWebkit" }
+androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilCompose" }
 coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coilCompose" }
 core = { module = "com.pierfrancescosoffritti.androidyoutubeplayer:core", version.ref = "core" }

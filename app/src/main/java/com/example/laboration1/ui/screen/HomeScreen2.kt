@@ -73,6 +73,7 @@ fun HomeScreen2(navController: NavController) {
     LaunchedEffect(sortType) {
         Log.d("HomeScreen2","Fetching movies for type: ${sortType}")
         viewModel.fetchMovies(sortType,context)
+        viewModel.scheduleMovieCaching(context,sortType) // trigger background worker
     }
 
     val movies = viewModel.movies.collectAsState().value
