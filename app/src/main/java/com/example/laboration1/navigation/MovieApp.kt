@@ -5,9 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.laboration1.data.MovieRepository
 import com.example.laboration1.ui.screen.DetailScreen
-import com.example.laboration1.ui.screen.HomeScreen
 import com.example.laboration1.ui.screen.HomeScreen2
 import com.example.laboration1.ui.screen.ThirdScreen
 

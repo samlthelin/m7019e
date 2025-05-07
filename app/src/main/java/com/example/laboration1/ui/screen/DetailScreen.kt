@@ -2,6 +2,7 @@ package com.example.laboration1.ui.screen
 
 import android.annotation.SuppressLint
 import android.content.ActivityNotFoundException
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
@@ -32,6 +33,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
@@ -46,30 +49,32 @@ import com.example.laboration1.network.ConnectionStatus
 import com.example.laboration1.network.ConnectivityObserver
 import com.example.laboration1.ui.viewmodel.MovieViewModel
 import java.time.format.TextStyle
+import com.example.laboration1.ui.viewmodel.MovieViewModelFactory
+
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DetailScreen(navController: NavController, movieId: Int, viewModel: MovieViewModel = viewModel()) {
+fun DetailScreen(
+    navController: NavController,
+    movieId: Int,
+    viewModel: MovieViewModel = viewModel(
+        factory = MovieViewModelFactory(LocalContext.current.applicationContext)
+    )
+) {
     val context = LocalContext.current
     val movie = viewModel.selectedMovie.collectAsState().value
     val connectivityObserver = remember { ConnectivityObserver(context) }
 
-    LaunchedEffect(Unit) {
+    // Only fetch when movie is null AND we have internet
+    LaunchedEffect(movieId) {
         connectivityObserver.connectionStatus.collect { status ->
-            if (status == ConnectionStatus.Available && movie==null) {
-                Log.d("DetailScreen","Connection to detailscreen restored: fetching movie!!!")
-                viewModel.fetchMovieDetails(movieId,context)
+            if (status == ConnectionStatus.Available && movie == null) {
+                viewModel.fetchMovieDetails(movieId)
             }
         }
     }
 
-    // we're telling compose to only run this ONCE (on first composition).
-    // without this, the screen could recompose 20 times and need to fetch the movies 20 times!
-    LaunchedEffect(movieId) {
-        viewModel.fetchMovieDetails(movieId, context)
-    }
-    // makes it so that we do not need the safe calls (?)
     if (movie == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("Loading...")
@@ -78,16 +83,14 @@ fun DetailScreen(navController: NavController, movieId: Int, viewModel: MovieVie
     }
 
     Scaffold(
-        topBar = {
-            TopBarWithHome(title = movie.title, navController = navController)
-        }
+        topBar = { TopBarWithHome(title = movie.title, navController = navController) }
     ) { paddingValues ->
         Column(
-            modifier = Modifier.Companion
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp),
-            horizontalAlignment = Alignment.Companion.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             AsyncImage(
                 model = "${Constants.POSTER_IMAGE_BASE_URL}${Constants.POSTER_IMAGE_BASE_WIDTH}${movie.posterPath}",
@@ -98,60 +101,46 @@ fun DetailScreen(navController: NavController, movieId: Int, viewModel: MovieVie
                     .width(200.dp)
                     .height(300.dp)
                     .alpha(1f),
-                    //.background(Color.Red),
                 onSuccess = {
                     Log.d("Coil", "Poster loaded successfully!")
                 },
-                onError = { error ->
-                    Log.e("Coil", "Failed to load poster: ${error.result.throwable.message}")
+                onError = {
+                    Log.e("Coil", "Failed to load poster: ${it.result.throwable.message}")
                 }
             )
 
-            Spacer(modifier = Modifier.Companion.padding(16.dp))
+            Spacer(modifier = Modifier.padding(16.dp))
             GenreChips(genres = movie.genres)
-            Spacer(modifier = Modifier.Companion.padding(8.dp))
+            Spacer(modifier = Modifier.padding(8.dp))
 
             ClickableText(
                 text = AnnotatedString("Visit Homepage"),
-
                 onClick = {
                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(movie.homepage))
                     context.startActivity(intent)
                 },
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = MaterialTheme.colorScheme.primary
-                ),
-                modifier = Modifier.Companion.padding(8.dp)
+                style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.primary),
+                modifier = Modifier.padding(8.dp)
             )
 
             Button(onClick = {
-                //val context = LocalContext.current
-
-                val imdbUri = Uri.parse("imdb:///title/${movie.imdbId}") // imdb app uri scheme
-                val imdbIntent = Intent(Intent.ACTION_VIEW, imdbUri).apply {
-                    setPackage("com.imdb.mobile") // essentially force open imdb app
+                val imdbUri = Uri.parse("imdb:///title/${movie.imdbId}")
+                val intent = Intent(Intent.ACTION_VIEW, imdbUri).apply {
+                    setPackage("com.imdb.mobile")
                 }
-
                 try {
-                    context.startActivity(imdbIntent)
+                    context.startActivity(intent)
                 } catch (e: ActivityNotFoundException) {
-                    // if app isn't installed, we go to the browser instead
                     val fallbackUri = Uri.parse("https://www.imdb.com/title/${movie.imdbId}")
-                    val fallbackIntent = Intent(Intent.ACTION_VIEW, fallbackUri)
-                    context.startActivity(fallbackIntent)
+                    context.startActivity(Intent(Intent.ACTION_VIEW, fallbackUri))
                 }
             }) {
                 Text("Open in IMDB App")
             }
 
-
-            //Spacer(modifier = Modifier.padding(8.dp))
-
             Button(onClick = { navController.navigate("third/${movie.id}") }) {
                 Text("Go to Third Screen")
             }
-
-
         }
     }
 }

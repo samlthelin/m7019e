@@ -38,13 +38,15 @@ import com.example.laboration1.network.ConnectionStatus
 import com.example.laboration1.network.ConnectivityObserver
 import com.example.laboration1.ui.component.TopBarWithSort
 import com.example.laboration1.ui.viewmodel.MovieViewModel
+import com.example.laboration1.ui.viewmodel.MovieViewModelFactory
+
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen2(navController: NavController) {
-    val viewModel: MovieViewModel = viewModel()
     val context = LocalContext.current
+    val viewModel: MovieViewModel = viewModel(factory = MovieViewModelFactory(context))
 
     var sortType by rememberSaveable { mutableStateOf("popular") }
     val connectivityObserver = remember { ConnectivityObserver(context) }
@@ -52,15 +54,15 @@ fun HomeScreen2(navController: NavController) {
     LaunchedEffect(Unit) {
         connectivityObserver.connectionStatus.collect { status ->
             if (status == ConnectionStatus.Available) {
-                viewModel.fetchMovies(sortType, context)
+                viewModel.fetchMovies(sortType)
             }
         }
     }
 
     LaunchedEffect(sortType) {
         Log.d("HomeScreen2","Fetching movies for type: ${sortType}")
-        viewModel.fetchMovies(sortType,context)
-        viewModel.scheduleMovieCaching(context,sortType) // trigger background worker
+        viewModel.fetchMovies(sortType)
+        viewModel.scheduleMovieCaching(sortType) // trigger background worker
     }
 
     val movies = viewModel.movies.collectAsState().value

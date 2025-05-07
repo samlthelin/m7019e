@@ -33,35 +33,40 @@ import com.example.laboration1.ui.component.ReviewCard
 import com.example.laboration1.ui.component.TopBarWithHome
 import com.example.laboration1.ui.component.VideoCard
 import com.example.laboration1.ui.viewmodel.MovieViewModel
+import com.example.laboration1.ui.viewmodel.MovieViewModelFactory
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ThirdScreen(navController: NavController, movieId: Int, viewModel: MovieViewModel = viewModel()) {
+fun ThirdScreen(navController: NavController, movieId: Int) {
+    val context = LocalContext.current
+    val viewModel: MovieViewModel = viewModel(factory = MovieViewModelFactory(context))
     val reviews = viewModel.reviews.collectAsState().value
     val videos = viewModel.videos.collectAsState().value
-    val context = LocalContext.current
     val connectivityObserver = remember { ConnectivityObserver(context) }
-
-    LaunchedEffect(Unit) {
-        connectivityObserver.connectionStatus.collect { status ->
-            if (status == ConnectionStatus.Available) {
-                Log.d("ThirdScreen","Connection to ThirdScreen restored: fetching reviews and trailers!")
-                viewModel.fetchVideos(movieId)
-                viewModel.fetchReviews(movieId)
-            }
-        }
-    }
-
-
-
-
-
 
     LaunchedEffect(movieId) {
         viewModel.fetchReviews(movieId)
         viewModel.fetchVideos(movieId)
+
+        connectivityObserver.connectionStatus.collect { status ->
+            if (status == ConnectionStatus.Available) {
+                Log.d("ThirdScreen", "Connection restored: re-fetching extras!")
+                viewModel.fetchReviews(movieId)
+                viewModel.fetchVideos(movieId)
+            }
+        }
     }
+
+    val sampleVideo = ApiVideo(
+        id = "sample",
+        key = "sample_key",
+        name = "Sample Trailer",
+        site = "Sample",
+        type = "Trailer"
+    )
+
+    val allVideos = listOf(sampleVideo) + videos
 
     Scaffold(
         topBar = { TopBarWithHome(title = "Extras", navController = navController) }
@@ -71,10 +76,9 @@ fun ThirdScreen(navController: NavController, movieId: Int, viewModel: MovieView
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // lazy column for UP-DOWN.
             Box(
                 modifier = Modifier
-                    .weight(1f) //NEEDED to take up vertical spaceeeeeeeee
+                    .weight(1f)
                     .fillMaxWidth()
             ) {
                 LazyColumn(
@@ -88,31 +92,18 @@ fun ThirdScreen(navController: NavController, movieId: Int, viewModel: MovieView
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            val sampleVideo = ApiVideo(
-                id = "sample",
-                key = "sample_key",
-                name = "Sample Trailer",
-                site = "Sample",
-                type = "Trailer"
-            )
-
-            val allVideos = listOf(sampleVideo) + videos
-
-
-            // lazy row for side-to-side
             Column {
                 Text(
                     "Trailers",
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
-                LazyRow {
+                LazyRow(modifier = Modifier.padding(horizontal = 8.dp)) {
                     items(allVideos) { video ->
                         VideoCard(video)
                     }
                 }
             }
         }
-
     }
 }
