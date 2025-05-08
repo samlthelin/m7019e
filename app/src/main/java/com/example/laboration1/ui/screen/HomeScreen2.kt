@@ -43,13 +43,19 @@ import com.example.laboration1.ui.viewmodel.MovieViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen2(navController: NavController) {
+    // use viewmodel to fetch, manage states and expose flows to UI
     val viewModel: MovieViewModel = viewModel()
     val context = LocalContext.current
 
+    // mutable! always start as popular.
     var sortType by rememberSaveable { mutableStateOf("popular") }
+    // remember for checking the network status.
     val connectivityObserver = remember { ConnectivityObserver(context) }
 
+    // we use connectivity observer. essentially, if we launch without internet but get it later,
+    // refresh the page and fetch movies from api!
     LaunchedEffect(Unit) {
+        // if we launch the screen without connection it waits. once internet is back, we fetch automatically!
         connectivityObserver.connectionStatus.collect { status ->
             if (status == ConnectionStatus.Available) {
                 viewModel.fetchMovies(sortType, context)
@@ -57,9 +63,13 @@ fun HomeScreen2(navController: NavController) {
         }
     }
 
+    //launchedeffect on sorttype. observe when it changes and act when it does!
     LaunchedEffect(sortType) {
         Log.d("HomeScreen2","Fetching movies for type: ${sortType}")
         viewModel.fetchMovies(sortType,context)
+
+        //might not be needed, but it works for ensuring the movies are cached if the app crashes
+        // or loses power!!!
         viewModel.scheduleMovieCaching(context,sortType) // trigger background worker
     }
 

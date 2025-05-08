@@ -56,6 +56,7 @@ fun DetailScreen(navController: NavController, movieId: Int, viewModel: MovieVie
     val connectivityObserver = remember { ConnectivityObserver(context) }
 
     LaunchedEffect(Unit) {
+        // if we launch the screen without connection it waits. once internet is back, we fetch automatically!
         connectivityObserver.connectionStatus.collect { status ->
             if (status == ConnectionStatus.Available && movie==null) {
                 Log.d("DetailScreen","Connection to detailscreen restored: fetching movie!!!")

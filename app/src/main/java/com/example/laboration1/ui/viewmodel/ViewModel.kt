@@ -39,11 +39,6 @@ class MovieViewModel : ViewModel() {
     private val _genreSections = MutableStateFlow<Map<String, List<Movie>>>(emptyMap())
     val genreSections: StateFlow<Map<String, List<Movie>>> = _genreSections
 
-    // fetch the popular movies when we start (look at fetchMovies..)
-    //init {
-    //    fetchMovies()
-    //}
-
     fun fetchMovies(viewType: String, context: Context) {
         // Important since it is running in background. When viewmodel is destroyed we want these to cancel as well
         viewModelScope.launch {
@@ -51,7 +46,7 @@ class MovieViewModel : ViewModel() {
             val dao = db.movieDao()
 
             try {
-                // 1. Load cached first, before calling API (offline support!)
+                // 1. load cached first, before calling API (offline support!)
                 val cached = dao.getMoviesByViewType(viewType).map { it.toMovie() }
                 Log.d("Room Cache", "Loaded ${cached.size} cached movies for viewType = $viewType")
                 _movies.value = cached
@@ -64,7 +59,7 @@ class MovieViewModel : ViewModel() {
                 _genreSections.value = groupedCached
 
 
-                // 2. Fetch genres and either popular or top-rated
+                // fetch genres and either popular or top-rated
                 val genreResponse = TmdbClient.api.getGenres(Secrets.API_KEY)
                 val genreMap = genreResponse.genres.associateBy({ it.id }, { it.name }) // used to map ids to names
 
@@ -78,7 +73,7 @@ class MovieViewModel : ViewModel() {
 
                 _movies.value = movieList
 
-                // 3. Update genre sections
+                // update genre sections
 
                 val grouped = movieList
                     .flatMap { movie -> movie.genres.map { genre -> genre to movie } }
@@ -91,7 +86,7 @@ class MovieViewModel : ViewModel() {
 
 
 
-                // 4. Save to Room (after setting _movies, so it's snappy)
+                // save to Room (after setting _movies, so it's snappy)
                 val entities = movieResponse.results.map { it.toEntity(viewType, genreMap) }
                 Log.d("EntityMapping", "Mapped ${entities.size} movies to entities")
                 Log.d("Room Insert", "Saving ${entities.size} movies to ROom for viewType=$viewType")
@@ -187,6 +182,7 @@ class MovieViewModel : ViewModel() {
             .setInputData(data)
             .build()
 
+        // triggers cachemoviesworker!! it downloads and stores fresh version of sorttype in DB.
         WorkManager.getInstance(context).enqueueUniqueWork(
             "cache_movies",
             ExistingWorkPolicy.REPLACE,
